@@ -54,7 +54,7 @@ async def meny(message: Message):
                          reply_markup=keyboard)
 
 @dp.message(F.text.lower() == "русский")
-@dp.message(F.text.lower() == "в меню")
+@dp.message(F.text.lower() == "меню")
 async def meny(message: Message):
 
     kb = [
@@ -88,12 +88,28 @@ async def place(message: Message):
 
     await message.answer("Или вернитесь обратно в меню", reply_markup=keyboard)
 
+@dp.message(F.text.lower() == "quests")
+async def place(message: Message):
+    await message.answer("Choose a quest", reply_markup=ReplyKeyboardRemove())
+    kb = [
+
+            [KeyboardButton(text="Quest 1"), KeyboardButton(text="Quest 2"), KeyboardButton(text="Quest 3")],
+            [KeyboardButton(text="Quest 4"), KeyboardButton(text="Quest 5")],
+            [KeyboardButton(text="Menu")]
+    ]
+    keyboard = ReplyKeyboardMarkup(
+        keyboard=kb,
+        resize_keyboard=True
+    )
+
+    await message.answer("Or go back to the menu", reply_markup=keyboard)
+
 @dp.message(F.text.lower() == "справка")
 async def anotation(message: Message):
     await message.answer("текст для жури, откда взята вся информация вставленная в бота", reply_markup=ReplyKeyboardRemove())
     kb = [
         [
-            KeyboardButton(text="В меню"),
+            KeyboardButton(text="Меню"),
         ],
     ]
     keyboard = ReplyKeyboardMarkup(
@@ -101,6 +117,20 @@ async def anotation(message: Message):
         resize_keyboard=True,
     )
     await message.answer("Нажмите кнопку 'В меню' чтобы вернуться обратно", reply_markup=keyboard)
+
+@dp.message(F.text.lower() == "reference")
+async def anotation(message: Message):
+    await message.answer("текст откуда взята вся информация вставленная в бота", reply_markup=ReplyKeyboardRemove())
+    kb = [
+        [
+            KeyboardButton(text="Menu"),
+        ],
+    ]
+    keyboard = ReplyKeyboardMarkup(
+        keyboard=kb,
+        resize_keyboard=True,
+    )
+    await message.answer("Press the 'Menu' button to go back", reply_markup=keyboard)
 
 @dp.message(F.text.lower() == "информация для первокурсников")
 @dp.message(F.text.lower() == "другая категория")
@@ -125,7 +155,7 @@ async def info(message: Message):
     kb = [
 
             [KeyboardButton(text="Metro and buses"), KeyboardButton(text="Cultural places")],
-            [KeyboardButton(text="Interesting establishments")],
+            [KeyboardButton(text="Interesting places")],
             [KeyboardButton(text="Dangerous areas"), KeyboardButton(text="Menu")]
     ]
     keyboard = ReplyKeyboardMarkup(
@@ -191,7 +221,66 @@ async def motivation(message: Message):
 
     await message.answer(answer)
 
-    await message.answer("выберите другую категоорию или вернитесь обратно в меню", reply_markup=keyboard)
+    await message.answer("выберите другую категоорию или вернитесь обратно в меню", reply_markup=keyboard)@dp.message(F.text.lower() == "получить ещё больше мотивации")
+
+@dp.message(F.text.lower() == "get even more motivation")
+@dp.message(F.text.lower() == "motivating words (ai)")
+async def motivation(message: Message):
+    await message.answer("Wait", reply_markup=ReplyKeyboardRemove())
+    kb = [
+        [
+            KeyboardButton(text="Get even more motivation"),
+            KeyboardButton(text="Menu"),
+        ],
+    ]
+    keyboard = ReplyKeyboardMarkup(
+        keyboard=kb,
+        resize_keyboard=True,
+    )
+
+
+    load_dotenv()
+    folder_id = os.getenv("YANDEX_FOLDER_ID")
+    api_key = os.getenv("YANDEX_API_KEY")
+    gpt_model = 'yandexgpt-lite'
+
+    system_prompt = 'представь что ты носитель английского языка и психолог с 10ти летнем стажем и напиши мотивирующие слова для первокурсника только на английском языке'
+
+
+    body = {
+        'modelUri': f'gpt://{folder_id}/{gpt_model}',
+        'completionOptions': {'stream': False, 'temperature': 0.3, 'maxTokens': 2000},
+        'messages': [
+            {'role': 'system', 'text': system_prompt},
+
+        ],
+    }
+    url = 'https://llm.api.cloud.yandex.net/foundationModels/v1/completionAsync'
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Api-Key {api_key}'
+    }
+
+    response = requests.post(url, headers=headers, json=body)
+    operation_id = response.json().get('id')
+
+    url = f"https://llm.api.cloud.yandex.net:443/operations/{operation_id}"
+    headers = {"Authorization": f"Api-Key {api_key}"}
+
+    while True:
+        response = requests.get(url, headers=headers)
+        done = response.json()["done"]
+        if done:
+            break
+        time.sleep(2)
+
+    data = response.json()
+    answer = data['response']['alternatives'][0]['message']['text']
+
+
+    await message.answer(answer)
+
+    await message.answer("Select another category or go back to the menu.", reply_markup=keyboard)
 
 @dp.message(F.text.lower() == "метро и автобусы")
 async def metro(message: Message):
@@ -221,7 +310,7 @@ async def metro(message: Message):
         keyboard=kb,
         resize_keyboard=True,
     )
-    await message.answer("выберите другую категоорию или вернитесь обратно в меню", reply_markup=keyboard)
+    await message.answer("Select another category or go back to the menu", reply_markup=keyboard)
 
 @dp.message(F.text.lower() == "культурные места")
 async def culture(message: Message):
@@ -238,6 +327,21 @@ async def culture(message: Message):
     )
     await message.answer("выберите другую категоорию или вернитесь обратно в меню", reply_markup=keyboard)
 
+@dp.message(F.text.lower() == "cultural places")
+async def culture(message: Message):
+    await message.answer("'текст про различные культурные места в москве'", reply_markup=ReplyKeyboardRemove())
+    kb = [
+        [
+            KeyboardButton(text="Another category"),
+            KeyboardButton(text="Menu"),
+        ],
+    ]
+    keyboard = ReplyKeyboardMarkup(
+        keyboard=kb,
+        resize_keyboard=True,
+    )
+    await message.answer("Select another category or go back to the menu", reply_markup=keyboard)
+
 @dp.message(F.text.lower() == "интересные заведения")
 async def cafe(message: Message):
     await message.answer("'текст про различные кафе и рестораны в москве'", reply_markup=ReplyKeyboardRemove())
@@ -253,6 +357,21 @@ async def cafe(message: Message):
     )
     await message.answer("выберите другую категоорию или вернитесь обратно в меню", reply_markup=keyboard)
 
+@dp.message(F.text.lower() == "interesting places")
+async def cafe(message: Message):
+    await message.answer("'текст про различные кафе и рестораны в москве'", reply_markup=ReplyKeyboardRemove())
+    kb = [
+        [
+            KeyboardButton(text="another category"),
+            KeyboardButton(text="Menu"),
+        ],
+    ]
+    keyboard = ReplyKeyboardMarkup(
+        keyboard=kb,
+        resize_keyboard=True,
+    )
+    await message.answer("Select another category or go back to the menu", reply_markup=keyboard)
+
 @dp.message(F.text.lower() == "опасные районы")
 async def adangeros(message: Message):
     await message.answer("'текст про опасные районы в москве'", reply_markup=ReplyKeyboardRemove())
@@ -267,6 +386,21 @@ async def adangeros(message: Message):
         resize_keyboard=True,
     )
     await message.answer("выберите другую категоорию или вернитесь обратно в меню", reply_markup=keyboard)
+
+@dp.message(F.text.lower() == "dangerous areas")
+async def adangeros(message: Message):
+    await message.answer("'текст про опасные районы в москве'", reply_markup=ReplyKeyboardRemove())
+    kb = [
+        [
+            KeyboardButton(text="Another category"),
+            KeyboardButton(text="Menu"),
+        ],
+    ]
+    keyboard = ReplyKeyboardMarkup(
+        keyboard=kb,
+        resize_keyboard=True,
+    )
+    await message.answer("Select another category or go back to the menu", reply_markup=keyboard)
 
 @dp.message(F.text.lower() == "выполнено")
 async def final(message: Message):
@@ -285,6 +419,22 @@ async def final(message: Message):
 
     await message.answer("Выберите следующий квест или вернитесь в меню", reply_markup=keyboard)
 
+@dp.message(F.text.lower() == "done")
+async def final(message: Message):
+    await message.answer("You did well! Keep up the good work", reply_markup=ReplyKeyboardRemove())
+    kb = [
+
+        [KeyboardButton(text="Quest 1"), KeyboardButton(text="Quest 2"), KeyboardButton(text="Quest 3")],
+        [KeyboardButton(text="Quest4"), KeyboardButton(text="Quest 5")],
+        [KeyboardButton(text="Menu")]
+    ]
+    keyboard = ReplyKeyboardMarkup(
+        keyboard=kb,
+        resize_keyboard=True
+    )
+
+    await message.answer("Select the next quest or go back to the menu.", reply_markup=keyboard)
+
 @dp.message(F.text.lower() == "квест 1")
 async def day_1(message: Message):
     await message.answer("Задание: зайти в чат с однокурсниками", reply_markup=ReplyKeyboardRemove())
@@ -298,6 +448,20 @@ async def day_1(message: Message):
         resize_keyboard=True,
     )
     await message.answer("Нажмите выполнено по окончании выполнения задания", reply_markup=keyboard)
+
+@dp.message(F.text.lower() == "quest 1")
+async def day_1(message: Message):
+    await message.answer("Task: go into a chat with classmates", reply_markup=ReplyKeyboardRemove())
+    kb = [
+        [
+            KeyboardButton(text="Done"),
+        ],
+    ]
+    keyboard = ReplyKeyboardMarkup(
+        keyboard=kb,
+        resize_keyboard=True,
+    )
+    await message.answer("Click done at the end of the task", reply_markup=keyboard)
 
 @dp.message(F.text.lower() == "квест 2")
 async def day_2(message: Message):
@@ -313,6 +477,20 @@ async def day_2(message: Message):
     )
     await message.answer("Нажмите выполнено по окончании выполнения задания", reply_markup=keyboard)
 
+@dp.message(F.text.lower() == "quest 2")
+async def day_1(message: Message):
+    await message.answer("Task: write a message in a chat with classmates in order to establish contact", reply_markup=ReplyKeyboardRemove())
+    kb = [
+        [
+            KeyboardButton(text="Done"),
+        ],
+    ]
+    keyboard = ReplyKeyboardMarkup(
+        keyboard=kb,
+        resize_keyboard=True,
+    )
+    await message.answer("Click done at the end of the task", reply_markup=keyboard)
+
 @dp.message(F.text.lower() == "квест 3")
 async def day_3(message: Message):
     await message.answer("Задание: погулять с однокурсниками", reply_markup=ReplyKeyboardRemove())
@@ -326,6 +504,20 @@ async def day_3(message: Message):
         resize_keyboard=True,
     )
     await message.answer("Нажмите выполнено по окончании выполнения задания", reply_markup=keyboard)
+
+@dp.message(F.text.lower() == "quest 3")
+async def day_1(message: Message):
+    await message.answer("Task: to go for a walk with classmates", reply_markup=ReplyKeyboardRemove())
+    kb = [
+        [
+            KeyboardButton(text="Done"),
+        ],
+    ]
+    keyboard = ReplyKeyboardMarkup(
+        keyboard=kb,
+        resize_keyboard=True,
+    )
+    await message.answer("Click done at the end of the task", reply_markup=keyboard)
 
 @dp.message(F.text.lower() == "квест 4")
 async def day_4(message: Message):
@@ -341,6 +533,20 @@ async def day_4(message: Message):
     )
     await message.answer("Нажмите выполнено по окончании выполнения задания", reply_markup=keyboard)
 
+@dp.message(F.text.lower() == "quest 4")
+async def day_1(message: Message):
+    await message.answer("Task: to get acquainted with the rectors", reply_markup=ReplyKeyboardRemove())
+    kb = [
+        [
+            KeyboardButton(text="Done"),
+        ],
+    ]
+    keyboard = ReplyKeyboardMarkup(
+        keyboard=kb,
+        resize_keyboard=True,
+    )
+    await message.answer("Click done at the end of the task", reply_markup=keyboard)
+
 @dp.message(F.text.lower() == "квест 5")
 async def day_5(message: Message):
     await message.answer("Задание: выпить кофе", reply_markup=ReplyKeyboardRemove())
@@ -354,6 +560,20 @@ async def day_5(message: Message):
         resize_keyboard=True,
     )
     await message.answer("Нажмите выполнено по окончании выполнения задания", reply_markup=keyboard)
+
+@dp.message(F.text.lower() == "quest 5")
+async def day_1(message: Message):
+    await message.answer("Task: to drink coffee", reply_markup=ReplyKeyboardRemove())
+    kb = [
+        [
+            KeyboardButton(text="Done"),
+        ],
+    ]
+    keyboard = ReplyKeyboardMarkup(
+        keyboard=kb,
+        resize_keyboard=True,
+    )
+    await message.answer("Click done at the end of the task", reply_markup=keyboard)
 
 load_dotenv()
 
